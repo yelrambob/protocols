@@ -1,0 +1,40 @@
+import os
+import csv
+import xml.etree.ElementTree as ET
+
+# Base directory
+base_dir = r"C:\Users\SChine01\OneDrive - AHS\protocol work\ProtocolData"
+
+# Use a set to collect unique protocol names
+protocol_names_set = set()
+
+# Recursively find UIRx.xml files and extract protocol names
+for root, dirs, files in os.walk(base_dir):
+    for file in files:
+        if file.lower() == "uirx.xml":
+            file_path = os.path.join(root, file)
+            try:
+                tree = ET.parse(file_path)
+                root_elem = tree.getroot()
+
+                for elem in root_elem.iter():
+                    if elem.tag.endswith("ulement") and elem.attrib.get("name") == "name":
+                        name = elem.attrib.get("value", "N/A")
+                        protocol_names_set.add(name)
+                        break
+
+            except ET.ParseError:
+                protocol_names_set.add("Parse Error")
+
+# Convert to sorted list
+protocol_names = sorted(protocol_names_set)
+
+# Save to CSV
+output_csv = os.path.join(base_dir, "unique_protocol_names.csv")
+with open(output_csv, "w", newline="", encoding="utf-8") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["Protocol Name"])
+    for name in protocol_names:
+        writer.writerow([name])
+
+print(f"✅ Saved {len(protocol_names)} unique protocol names to:\n{output_csv}")
